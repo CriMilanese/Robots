@@ -4,27 +4,24 @@
 
 package RootElement;
 
-import java.awt.Color;
 
+import simbad.sim.*;
+import RootElement.Robot;
+
+import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Random;
 
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import RootElement.Environment;
-import RootElement.Robot;
-import java.awt.image.BufferedImage;
-import simbad.sim.CameraSensor;
-import simbad.sim.RangeSensorBelt;
-import simbad.sim.LampActuator;
-import simbad.sim.RobotFactory;
 
 /************************************************************/
-/**
- * 
- */
-public class Mapper extends Robot {
+
+
+public class Mapper extends Robot{
 	
 	public CameraSensor camera;
 	public BufferedImage cameraImage;
@@ -43,7 +40,7 @@ public class Mapper extends Robot {
 		camera = RobotFactory.addCameraSensor(this);
 		sonars = RobotFactory.addSonarBeltSensor(this, 8);
 		bumpers = RobotFactory.addBumperBeltSensor(this, 16);
-		
+		lamp = RobotFactory.addLamp(this);	
 	}
 	
 	@Override
@@ -98,18 +95,91 @@ public class Mapper extends Robot {
     	return false;
     }
 	
-	public void performBehavior() {
-	        
-		// perform the following actions every 5 virtual seconds
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////77
+	//NEW FUNCTION -> is different than my turn -> checks for movement 
+	//TODO Move this function to Robot abstraction
+	//TODO: Implement other Fault types -> according to the number of digits different importance
+	/*
+	 * the light could be used to simulate an hardware fault !!
+	 * LIGHT ON -> everything normal
+	 * LIGHT OFF -> problem -> react!!!
+	 * a pseudorandom number can be generated and according to that value the lamp is turned on/off
+	 * must be a number that keeps the light on as long as possible or not at all
+	 * FIND A GOOD NUMBER:
+	 * lets'throw in some stats... 
+	 * when the number (let'S say min 2 max 5 digits long...so any number between 10 and 99999 ->36/99990) has all the same digits
+	 * Very little(?) probability to obtain but still possible
+	 */
+	
+	//simulates an hardware problem
+	public boolean isWorking(){
 		
+		if(this.getTranslationalVelocity()!=0){
+			lamp.setOn(true);
+		} else {
+			lamp.setOn(false);
+		}
+		
+		Random randomNum = new Random();
+		int hardwareValue = randomNum.nextInt(1000000)+100;
+		
+		String hardwareValueString = Integer.toString(hardwareValue);
+		int counter = 1;
+		
+		//System.out.println("DEBUG: "+hardwareValue);
+			
+		for (int i=0; i< hardwareValueString.length()-1;i++){
+			if (hardwareValueString.charAt(i) == hardwareValueString.charAt(i+1)){
+				counter += 1 ;
+			} else {
+				counter = 1;
+			}
+		}
+		
+		//TODO maybe limit error for numbers with more than 3 digits?
+		//HAS to be very unlikely
+		if(counter == hardwareValueString.length() && ((counter==3)||(counter==4))){
+			System.out.println("Sensor Fault: Reducing speed");
+			setTranslationalVelocity(0.2);
+			lamp.setBlink(true);
+			return true;
+		}
+		else if(counter == hardwareValueString.length() && counter == 5){
+			System.out.println("Camera Fault: Returning to base for repair");
+			lamp.setBlink(true);
+			moveToStartPosition();
+			lamp.setOn(true);
+			return true;
+		}
+		
+		else if (counter == hardwareValueString.length() && counter == 6){
+			System.out.println("Severe Hardware Fault: Shutting Down");
+			setTranslationalVelocity(0);
+			lamp.setOn(false);
+			return false;
+		} 
+		
+		return true;
+	}
+	
+	/////////////////////////////////////////////////////////////////////////////////
+	
+	public void performBehavior() {
+
 		if(this.myTurn){
 			
-			if(missionComplete()){
+			if(missionComplete() || !isWorking()){
 				setTranslationalVelocity(0);
 				moveToStartPosition();
 				this.myTurn = false;
-				//this.detach();
-			} else {
+			} 
+			
+			else if(!isWorking()){
+				setTranslationalVelocity(0);
+				myTurn = false;
+			}
+			
+			else {
 				
 				setTranslationalVelocity(0.5); 
 			
@@ -141,4 +211,7 @@ public class Mapper extends Robot {
 		//else {
 		//	moveToStartPosition();
 		//}
-	}};
+	}
+}
+	
+	
