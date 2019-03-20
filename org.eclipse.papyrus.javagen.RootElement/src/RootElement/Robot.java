@@ -4,6 +4,7 @@
 
 package RootElement;
 
+import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import simbad.sim.Agent;
@@ -48,6 +49,14 @@ public abstract class Robot extends Agent {
 	/**
 	 * 
 	 */
+	public String direction(){
+		Point3d agentLoc = new Point3d();
+		this.getCoords(agentLoc);
+		
+		agentLoc = null;
+		return "mm";
+	}
+	
 	public boolean itExists(){
 		if(this.detachedFromSceneGraph){
 			return false;

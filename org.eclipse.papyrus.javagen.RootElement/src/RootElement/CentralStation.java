@@ -58,7 +58,7 @@ public class CentralStation extends Robot {
 		
 		for(int i=0; i<howmany; i++){
 			
-			resBots[i] = new Rescuer(new Vector3d(-9,0,(-9+i)), "mapper", new Color3f(Color.yellow));
+			resBots[i] = new Rescuer(new Vector3d(-9,0,(-9+i)), "rescuer", new Color3f(Color.yellow));
 			environment.add(resBots[i]);
 		}
 	}
@@ -73,11 +73,36 @@ public class CentralStation extends Robot {
 	public void performBehavior(){
 		//mapBots[0].myTurn = true;
 		//mapBots[1].myTurn = true;
-		if (!(mapBots[0].myTurn) && !(mapBots[1].myTurn)){
-			resBots[0].myTurn = true;
-			resBots[1].myTurn = true;
+			boolean[] done = new boolean[2];
+			boolean[] broken = new boolean[2];
+			
+			done[0] = mapBots[0].missionComplete();
+			done[1] = mapBots[1].missionComplete();
+			broken[0] = (mapBots[0].isWorking())?false:true;
+			broken[1] = (mapBots[1].isWorking())?false:true;
+			
+			for(int i=0; i<2; i++){
+				if((done[i] || broken[i])){
+					if(mapBots[i].itExists()){
+						mapBots[i].detach();
+					}
+				}
+			}
+			if(done[0] && done[1]){
+				if(!resBots[0].itExists()){
+					resBots[0].attach();				
+				}
+				if(!resBots[1].itExists()){
+					resBots[1].attach();				
+				}
+				resBots[0].myTurn = true;
+				resBots[1].myTurn = true;
+			}
 		}
-	}
+//		if (!(mapBots[0].myTurn) && !(mapBots[1].myTurn)){
+//
+//		}
+	
 	
 	@Override
 	public boolean missionComplete(){

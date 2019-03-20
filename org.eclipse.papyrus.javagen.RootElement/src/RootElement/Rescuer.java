@@ -29,6 +29,9 @@ public class Rescuer extends Robot {
 	@Override
 	public void initBehavior() {
 		// TODO Auto-generated method stub
+		if(!this.myTurn){
+			this.detach();
+		}
 		
 	}
 
@@ -37,7 +40,10 @@ public class Rescuer extends Robot {
 	public void performBehavior() {
         
 		// perform the following actions every 5 virtual seconds
-			
+
+		if(this.myTurn && !this.itExists()){
+			this.attach();
+		}
 			//setTranslationalVelocity(0.5); 
 		if (this.myTurn){
 			if(getCounter() % 5 == 0) {

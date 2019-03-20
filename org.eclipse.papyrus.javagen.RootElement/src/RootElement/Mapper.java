@@ -141,6 +141,7 @@ public class Mapper extends Robot{
 		if(counter == hardwareValueString.length() && ((counter==3)||(counter==4))){
 			System.out.println("Sensor Fault: Reducing speed");
 			setTranslationalVelocity(0.2);
+			setRotationalVelocity(0);
 			lamp.setBlink(true);
 			return true;
 		}
@@ -166,9 +167,12 @@ public class Mapper extends Robot{
 	
 	public void performBehavior() {
 
+		if(getCounter()%1000==0){
+			
+		}
 		if(this.myTurn){
 			
-			if(missionComplete() || !isWorking()){
+			if(missionComplete()){
 				setTranslationalVelocity(0);
 				moveToStartPosition();
 				this.myTurn = false;
@@ -176,7 +180,7 @@ public class Mapper extends Robot{
 			
 			else if(!isWorking()){
 				setTranslationalVelocity(0);
-				myTurn = false;
+				this.myTurn = false;
 			}
 			
 			else {
