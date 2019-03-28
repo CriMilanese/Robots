@@ -7,7 +7,6 @@ package RootElement;
 import javax.vecmath.Color3f;
 import javax.vecmath.Vector3d;
 
-import RootElement.Environment;
 import RootElement.Robot;
 import simbad.sim.RobotFactory;
 
@@ -57,6 +56,11 @@ public class Rescuer extends Robot {
 				} 
 			}
 		}
+	}
+	
+	@Override
+	public boolean isWorking(){
+		return true;
 	}
 
 	@Override

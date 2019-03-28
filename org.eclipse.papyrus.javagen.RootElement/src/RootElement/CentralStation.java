@@ -4,10 +4,8 @@
 
 package RootElement;
 
-import java.awt.Color;
 import java.util.ArrayList;
-
-import javax.vecmath.Color3f;
+import simbad.sim.Agent;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import simbad.sim.EnvironmentDescription;
@@ -16,13 +14,13 @@ import simbad.sim.EnvironmentDescription;
 /**
  * 
  */
-public class CentralStation extends Robot {
+public class CentralStation extends Agent {
 	
 	//create one instance of this class SINGLETON
-	private static CentralStation cs = new CentralStation(new Vector3d(20,0,20), "CentralStation");
+	private static CentralStation cs = new CentralStation(new Vector3d(15,0,15), "CentralStation");
 	ArrayList<Point3d> posArray; 
-	Mapper mapBots[];
-	Rescuer resBots[];
+	Robot mapBots[];
+	Robot resBots[];
 	
 	//private constructor
 //		TODO do we need more stuff in the constructor? 
@@ -33,7 +31,7 @@ public class CentralStation extends Robot {
 		 resBots = new Rescuer[2];
 	};
 	
-	//return the lonely instance SINGLETON
+	//returns the lonely instance SINGLETON
 	public static CentralStation getInstance(){
 		return cs;
 	}	
@@ -48,7 +46,7 @@ public class CentralStation extends Robot {
 		
 		for(int i=0; i<howmany; i++){
 			
-			mapBots[i] = new Mapper(new Vector3d(-9,0,(9-i)), "mapper", new Color3f(Color.blue));
+			mapBots[i] = DeviceFactory.getRobot("mapper");
 			env.add(mapBots[i]);
 			
 		}
@@ -58,7 +56,7 @@ public class CentralStation extends Robot {
 		
 		for(int i=0; i<howmany; i++){
 			
-			resBots[i] = new Rescuer(new Vector3d(-9,0,(-9+i)), "rescuer", new Color3f(Color.yellow));
+			resBots[i] = DeviceFactory.getRobot("rescuer");
 			environment.add(resBots[i]);
 		}
 	}
@@ -71,8 +69,6 @@ public class CentralStation extends Robot {
 	}
 	
 	public void performBehavior(){
-		//mapBots[0].myTurn = true;
-		//mapBots[1].myTurn = true;
 			boolean[] done = new boolean[2];
 			boolean[] broken = new boolean[2];
 			
@@ -99,12 +95,8 @@ public class CentralStation extends Robot {
 				resBots[1].myTurn = true;
 			}
 		}
-//		if (!(mapBots[0].myTurn) && !(mapBots[1].myTurn)){
-//
-//		}
 	
 	
-	@Override
 	public boolean missionComplete(){
 		return false;
 	}

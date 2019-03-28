@@ -167,9 +167,6 @@ public class Mapper extends Robot{
 	
 	public void performBehavior() {
 
-		if(getCounter()%1000==0){
-			
-		}
 		if(this.myTurn){
 			
 			if(missionComplete()){
@@ -186,7 +183,7 @@ public class Mapper extends Robot{
 			else {
 				
 				setTranslationalVelocity(0.5); 
-			
+				this.setMode("goAroud");
 				if(getCounter() % 5 == 0) {
 					
 					double frontSonar = sonars.getMeasurement(0);

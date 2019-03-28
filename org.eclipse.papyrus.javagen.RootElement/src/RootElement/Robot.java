@@ -21,17 +21,27 @@ public abstract class Robot extends Agent {
 	public RangeSensorBelt bumpers;
 	public RangeSensorBelt sonars;
 	public boolean myTurn = false;
+	private String mode;
 	/**
 	 * 
 	 */
 	public Robot(Vector3d position, String name){
 		super(position, name);
 	}
-
 	/**
 	 * 
 	 */
 	public abstract void initBehavior();
+	
+	public void setMode(String str){
+		if(str == "goAround" | str == "avoidObstacles" | str == "victimFound" && this instanceof Mapper){
+			this.mode = str;			
+		} else if (str == "reach" && this instanceof Rescuer){
+			this.mode = str;
+		} else {
+			System.err.println("The selected mode is incorrect");
+		}
+	}
 	
 	public void avoidObstacle(double l, double fl, double f, double fr, double r){
     	if((fl < fr) && fl < 0.5){
@@ -63,6 +73,8 @@ public abstract class Robot extends Agent {
 		}
 		return true;
 	}
+	public abstract boolean isWorking();
+	
 	public abstract boolean missionComplete();
 	
 	public abstract void performBehavior();
