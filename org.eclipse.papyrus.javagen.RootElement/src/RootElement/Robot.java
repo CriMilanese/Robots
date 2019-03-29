@@ -4,6 +4,7 @@
 
 package RootElement;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
@@ -42,7 +43,7 @@ public abstract class Robot extends Agent {
 	}
 	
 	public void setMode(String str){
-		if(str == "discover" | str == "avoid" | str == "found"){
+		if(str == "discover" | str == "found"){
 			if(this instanceof Mapper){
 				this.mode = str;							
 			} else {
@@ -54,24 +55,39 @@ public abstract class Robot extends Agent {
 			} else {
 				System.err.println("rescuer robot can't access this mode");
 			}
-		} else if(str == "minorFault" | str == "severeFault" | str == "done"){
+		} else if(str == "minorFault" | str == "severeFault" | str == "done" | str == "avoid"){
 			this.mode = str;
 		} else {	
 			System.err.println("The selected mode is incorrect");
 		}
 	}
 	
+	public void obstacleDetected(){
+		double leftSonar = sonars.getMeasurement(4);
+		double rightSonar = sonars.getMeasurement(2);
+		
+		if((sonars.getFrontQuadrantHits() > 0) || rightSonar < 0.3 || leftSonar < 0.3){
+			setMode("avoid");
+		} else {
+			if(this instanceof Mapper){
+				setMode("discover");
+			} else if (this instanceof Rescuer){
+				setMode("rescue");
+			}
+		}
+	}
+	
 	public void avoidObstacle(double l, double fl, double f, double fr, double r){
     	if((fl < fr) && fl < 0.5){
-    		rotateY(-5);
+    		rotateY(-15);
     	} else if ((fr < fl)  && fr < 0.5) {
-    		rotateY(5);
+    		rotateY(15);
     	} else if((fr > f) && f < 0.5 && (fl > f)){
-    		rotateY(-5);
+    		rotateY(-15);
     	} else if (l < 0.3){
-    		rotateY(-5);
+    		rotateY(-15);
     	} else if (r < 0.3){
-    		rotateY(5);
+    		rotateY(15);
     	}	    
     }
 	/**
@@ -140,7 +156,7 @@ public abstract class Robot extends Agent {
 		} 
 	}
 	
-//	public abstract void missionComplete();
+	public void setLocations(ArrayList<Point3d> pos){};
 	
 	public abstract void performBehavior();
 

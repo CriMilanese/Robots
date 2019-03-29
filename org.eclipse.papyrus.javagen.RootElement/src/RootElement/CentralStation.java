@@ -18,11 +18,9 @@ public class CentralStation extends Agent {
 	
 	//create one instance of this class SINGLETON
 	private static CentralStation cs = new CentralStation(new Vector3d(15,0,15), "CentralStation");
-	private static ArrayList<Point3d> posArray; 
+	private ArrayList<Point3d> posArray; 
 	Robot mapBots[];
 	Robot resBots[];
-//	boolean[] done = new boolean[]{false, false};
-//	boolean[] broken = new boolean[]{false, false};
 	
 	//private constructor
 //		TODO do we need more stuff in the constructor? 
@@ -82,29 +80,9 @@ public class CentralStation extends Agent {
 	}
 	
 	public void performBehavior(){
-//		System.out.println("central station performing behavior");
+		
 		if (getCounter() % 5 == 0){
-			
-//			for(int i = 0; i < 2; i++){
-//				System.out.println("[CS] for loop entered");
-//				if(mapBots[i].itExists()){
-//					System.out.println("[CS] itExists entered");
-//					if(posArray.size() >= 4){
-//						mapBots[i].myTurn = false;
-//						mapBots[i].setMode("done");
-//					}
-//					done[i] = (mapBots[i].getMode()=="done")?true:false;
-//					broken[i] = (mapBots[i].getMode()=="severeFault")?true:false;
-//					if((done[i] | (broken[i]))){
-//						mapBots[i].detach();
-//					}
-//				}
-//				if(!resBots[i].itExists() && done[i]){
-//					resBots[i].attach();
-//					resBots[i].myTurn = true;
-//					System.out.println("Is finally my turn!");
-//				}
-//			}	
+
 			if(mapBots[0].itExists() && mapBots[1].itExists()){
 				if(posArray.size() >=4 ){
 						mapBots[0].myTurn = false;
@@ -113,6 +91,7 @@ public class CentralStation extends Agent {
 						mapBots[1].setMode("done");
 						mapBots[0].detach();
 						mapBots[1].detach();
+//						calculateMap();
 				} else {
 						if (mapBots[0].getMode()=="severeFault"){
 							mapBots[0].detach();
@@ -125,7 +104,7 @@ public class CentralStation extends Agent {
 				if(!resBots[i].itExists() && mapBots[i].getMode()=="done"){	
 					resBots[i].attach();
 					resBots[i].myTurn = true;
-					System.out.println("Is finally my turn!");
+					resBots[i].setLocations(posArray);
 				}
 			}
 		}

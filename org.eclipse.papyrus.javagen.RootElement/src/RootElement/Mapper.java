@@ -67,18 +67,7 @@ public class Mapper extends Robot{
 //    	System.out.println("DEBUG: " + coordinates);
 //    	System.out.println("DEBUG: " + posArray.size());
 	}
-	
-	private void obstacleDetected(){
-		double leftSonar = sonars.getMeasurement(4);
-		double rightSonar = sonars.getMeasurement(2);
 		
-		if((sonars.getFrontQuadrantHits() > 0) || rightSonar < 0.3 || leftSonar < 0.3){
-			setMode("avoid");
-		} else {
-			setMode("discover");
-		}
-	}
-	
 	public void sendCoordinates(Point3d p3d){
 		CentralStation.getInstance().setCoordinates(p3d);
 	};

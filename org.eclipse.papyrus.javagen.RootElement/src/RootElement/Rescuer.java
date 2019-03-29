@@ -5,6 +5,9 @@
 package RootElement;
 
 import javax.vecmath.Color3f;
+import javax.vecmath.Point3d;
+
+import java.util.ArrayList;
 import javax.vecmath.Vector3d;
 
 import RootElement.Robot;
@@ -16,6 +19,9 @@ import simbad.sim.RobotFactory;
  */
 public class Rescuer extends Robot {
 	
+	private ArrayList<Point3d> victimPos = new ArrayList<Point3d>();
+	private Point3d myPos;
+	
 	//constructor
 	public Rescuer(Vector3d position, String name, Color3f color) {
 		super(position, name);
@@ -26,6 +32,12 @@ public class Rescuer extends Robot {
         this.lamp = RobotFactory.addLamp(this);
     	
 	}
+	
+	public void setLocations(ArrayList<Point3d> copy){
+		
+		victimPos = (ArrayList<Point3d>)copy.clone();
+		System.out.println(victimPos.toString());
+	}
 
 	@Override
 	public void initBehavior() {
@@ -33,19 +45,47 @@ public class Rescuer extends Robot {
 		this.detach();
 	}
 
+	public void goAround(){
+		this.getCoords(myPos);
+
+	}
 
 	@Override
 	public void performBehavior() { 
 		if (this.itExists() && this.myTurn){
-			if(this.getCounter() % 10 == 0) {
+			if(this.getCounter() % 5 == 0) {
 				setTranslationalVelocity(0.5);
-				if ((this.getCounter() % 50) == 0) {
-					this.setRotationalVelocity(Math.PI / 2 * (0.5 - Math.random()));
+				
+				obstacleDetected();
+								
+				if(this.getMode()=="rescue"){
+					if ((this.getCounter() % 50) == 0) {
+						if(myPos.x > victimPos.get(0).x){
+							if(myPos.y > victimPos.get(0).y){
+								rotateY(-Math.PI/4);
+							} else if(myPos.y < victimPos.get(0).y){
+								rotateY(-Math.PI*3/4);
+							} else {
+								rotateY(-Math.PI/2);
+							}
+						} else if(myPos.x < victimPos.get(0).x) {
+							if(myPos.y > victimPos.get(0).y){
+								rotateY(Math.PI/4);
+							} else if(myPos.y < victimPos.get(0).y){
+								rotateY(Math.PI*3/4);
+							} else {
+								rotateY(Math.PI/2);
+							}
+						}
+					
+					}
+				} else if (this.getMode()=="avoid"){
+					goAround();
 				}
 
-				if(bumpers.oneHasHit()){
-					rotateY(-5);
-				} 
+//				if(bumpers.oneHasHit()){
+//					rotateY(-15);
+//				} 
 			}
 		}
 	}
