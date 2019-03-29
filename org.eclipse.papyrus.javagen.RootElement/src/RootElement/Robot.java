@@ -4,11 +4,14 @@
 
 package RootElement;
 
+import java.util.Random;
+
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import simbad.sim.Agent;
 import simbad.sim.RangeSensorBelt;
+import simbad.sim.LampActuator;
 
 /************************************************************/
 /**
@@ -20,6 +23,7 @@ public abstract class Robot extends Agent {
 	 */
 	public RangeSensorBelt bumpers;
 	public RangeSensorBelt sonars;
+	public LampActuator lamp;
 	public boolean myTurn = false;
 	private String mode;
 	/**
@@ -33,12 +37,26 @@ public abstract class Robot extends Agent {
 	 */
 	public abstract void initBehavior();
 	
+	public String getMode(){
+		return this.mode;
+	}
+	
 	public void setMode(String str){
-		if(str == "goAround" | str == "avoidObstacles" | str == "victimFound" && this instanceof Mapper){
-			this.mode = str;			
-		} else if (str == "reach" && this instanceof Rescuer){
+		if(str == "discover" | str == "avoid" | str == "found"){
+			if(this instanceof Mapper){
+				this.mode = str;							
+			} else {
+				System.err.println("mapper robot can't access this mode");				
+			}
+		} else if (str == "reach"){
+			if(this instanceof Rescuer){
+				this.mode = str;
+			} else {
+				System.err.println("rescuer robot can't access this mode");
+			}
+		} else if(str == "minorFault" | str == "severeFault" | str == "done"){
 			this.mode = str;
-		} else {
+		} else {	
 			System.err.println("The selected mode is incorrect");
 		}
 	}
@@ -73,9 +91,56 @@ public abstract class Robot extends Agent {
 		}
 		return true;
 	}
-	public abstract boolean isWorking();
 	
-	public abstract boolean missionComplete();
+	//simulates an hardware problem
+	public void isWorking(){
+		
+		if(this.getTranslationalVelocity()!=0){
+			lamp.setOn(true);
+		} else {
+			lamp.setOn(false);
+		}
+		
+		Random randomNum = new Random();
+		int hardwareValue = randomNum.nextInt(1000000)+100;
+		
+		String hardwareValueString = Integer.toString(hardwareValue);
+		int counter = 1;
+			
+		for (int i=0; i< hardwareValueString.length()-1;i++){
+			if (hardwareValueString.charAt(i) == hardwareValueString.charAt(i+1)){
+				counter += 1 ;
+			} else {
+				counter = 1;
+			}
+		}
+		
+		//TODO maybe limit error for numbers with more than 3 digits?
+		//HAS to be very unlikely
+		if(counter == hardwareValueString.length() && ((counter==3)||(counter==4))){
+			System.out.println("Sensor Fault: Reducing speed");
+			setTranslationalVelocity(0.2);
+			setRotationalVelocity(0);
+			lamp.setBlink(true);
+			setMode("minorFault");
+		}
+		else if(counter == hardwareValueString.length() && counter == 5){
+			System.out.println("Camera Fault: Returning to base for repair");
+			lamp.setBlink(true);
+			moveToStartPosition();
+			lamp.setOn(true);
+			setMode("severeFault");
+		}
+		
+		else if (counter == hardwareValueString.length() && counter == 6){
+			System.out.println("Severe Hardware Fault: Shutting Down");
+			setTranslationalVelocity(0);
+			lamp.setOn(false);
+			setMode("severeFault");
+		} 
+	}
+	
+//	public abstract void missionComplete();
 	
 	public abstract void performBehavior();
 

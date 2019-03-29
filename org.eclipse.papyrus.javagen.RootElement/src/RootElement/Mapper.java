@@ -10,8 +10,6 @@ import RootElement.Robot;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Random;
 
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
@@ -25,30 +23,28 @@ public class Mapper extends Robot{
 	
 	public CameraSensor camera;
 	public BufferedImage cameraImage;
-	public RangeSensorBelt sonars;
-	public RangeSensorBelt bumpers;
-	public LampActuator lamp;
 	
-	ArrayList<Point3d> posArray = new ArrayList<Point3d>(); 
+//	ArrayList<Point3d> posArray = new ArrayList<Point3d>(); 
 	
-	CentralStation cs = CentralStation.getInstance();
+//	CentralStation cs = CentralStation.getInstance();
 	
 	//CONSTRUCTOR
 	public Mapper(Vector3d pos, String name, Color3f color) {
 		super(pos, name);
 		this.setColor(color);
+		this.setMode("discover");
 		camera = RobotFactory.addCameraSensor(this);
-		sonars = RobotFactory.addSonarBeltSensor(this, 8);
-		bumpers = RobotFactory.addBumperBeltSensor(this, 16);
-		lamp = RobotFactory.addLamp(this);	
+		this.sonars = RobotFactory.addSonarBeltSensor(this, 8);
+		this.bumpers = RobotFactory.addBumperBeltSensor(this, 16);
+		this.lamp = RobotFactory.addLamp(this);	
 	}
 	
 	@Override
 	public void initBehavior() {
-		System.out.println("I exist");
+		System.out.println("I exist and my name is: " + this.name);
 	}
 	
-	public boolean boxDetected(){
+	public void targetDetected(){
 		cameraImage = camera.createCompatibleImage();
 		camera.copyVisionImage(cameraImage);
 		Color pixelRGB = new Color(cameraImage.getRGB(50,50));
@@ -56,44 +52,36 @@ public class Mapper extends Robot{
 		int green = pixelRGB.getGreen();
 		int blue = pixelRGB.getBlue();
 		if (red > 0 && green == 0 && blue == 0){
-			return true;
+			setMode("found");
 		}
-		return false;
 	}
 	
-	public void pinpoint() {
-    	boolean contains = false;
+	public Point3d pinpoint() {
         Point3d coordinates = new Point3d();
     	getCoords(coordinates);
     	coordinates.x = Math.round(coordinates.x);
     	coordinates.y = Math.round(coordinates.y);
     	coordinates.z = Math.round(coordinates.z);
+    	return coordinates;
     	
-    	// check if coordinates are already present in list
-    	for(int i=0;i<posArray.size();i++){
-    		if((coordinates.x == posArray.get(i).x) && (coordinates.z == posArray.get(i).z)){
-    			contains = true;
-    		}
-    	} // otherwise add new node
-    	if(!contains){
-    		posArray.add(coordinates);
-
-    	}
-    	
-    	System.out.println("DEBUG: " + coordinates);
-    	System.out.println("DEBUG: " + posArray.size());
+//    	System.out.println("DEBUG: " + coordinates);
+//    	System.out.println("DEBUG: " + posArray.size());
 	}
 	
-	public void sendCoordinates(){
-		cs.setCoordinates(posArray);
-	};
+	private void obstacleDetected(){
+		double leftSonar = sonars.getMeasurement(4);
+		double rightSonar = sonars.getMeasurement(2);
+		
+		if((sonars.getFrontQuadrantHits() > 0) || rightSonar < 0.3 || leftSonar < 0.3){
+			setMode("avoid");
+		} else {
+			setMode("discover");
+		}
+	}
 	
-	public boolean missionComplete(){
-    	if(posArray.size() >= 4){
-    		return true;
-    	}
-    	return false;
-    }
+	public void sendCoordinates(Point3d p3d){
+		CentralStation.getInstance().setCoordinates(p3d);
+	};
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////77
 	//NEW FUNCTION -> is different than my turn -> checks for movement 
@@ -111,107 +99,63 @@ public class Mapper extends Robot{
 	 * Very little(?) probability to obtain but still possible
 	 */
 	
-	//simulates an hardware problem
-	public boolean isWorking(){
-		
-		if(this.getTranslationalVelocity()!=0){
-			lamp.setOn(true);
-		} else {
-			lamp.setOn(false);
-		}
-		
-		Random randomNum = new Random();
-		int hardwareValue = randomNum.nextInt(1000000)+100;
-		
-		String hardwareValueString = Integer.toString(hardwareValue);
-		int counter = 1;
-		
-		//System.out.println("DEBUG: "+hardwareValue);
-			
-		for (int i=0; i< hardwareValueString.length()-1;i++){
-			if (hardwareValueString.charAt(i) == hardwareValueString.charAt(i+1)){
-				counter += 1 ;
-			} else {
-				counter = 1;
-			}
-		}
-		
-		//TODO maybe limit error for numbers with more than 3 digits?
-		//HAS to be very unlikely
-		if(counter == hardwareValueString.length() && ((counter==3)||(counter==4))){
-			System.out.println("Sensor Fault: Reducing speed");
-			setTranslationalVelocity(0.2);
-			setRotationalVelocity(0);
-			lamp.setBlink(true);
-			return true;
-		}
-		else if(counter == hardwareValueString.length() && counter == 5){
-			System.out.println("Camera Fault: Returning to base for repair");
-			lamp.setBlink(true);
-			moveToStartPosition();
-			lamp.setOn(true);
-			return true;
-		}
-		
-		else if (counter == hardwareValueString.length() && counter == 6){
-			System.out.println("Severe Hardware Fault: Shutting Down");
-			setTranslationalVelocity(0);
-			lamp.setOn(false);
-			return false;
-		} 
-		
-		return true;
-	}
+	
 	
 	/////////////////////////////////////////////////////////////////////////////////
 	
 	public void performBehavior() {
-
-		if(this.myTurn){
+		
+		/*  
+		 * 	Perform behavior runs even when instances are not attached to the environment
+		 *	hence we need to make sure this method does not check/call attributes/methods
+		 * 	of an instance that is being detached from the scene graph, otherwise a NullPointer 
+		 * 	Exception is thrown
+		 */
+		
+		if(this.itExists() && this.myTurn){
 			
-			if(missionComplete()){
-				setTranslationalVelocity(0);
-				moveToStartPosition();
-				this.myTurn = false;
-			} 
-			
-			else if(!isWorking()){
-				setTranslationalVelocity(0);
-				this.myTurn = false;
-			}
-			
-			else {
+			if (getMode()!="done"){
 				
-				setTranslationalVelocity(0.5); 
-				this.setMode("goAroud");
+				if(getCounter()%10==0){
+					isWorking();
+					if(bumpers.oneHasHit()){
+						rotateY(-10);
+					}
+				}
+				
 				if(getCounter() % 5 == 0) {
 					
-					double frontSonar = sonars.getMeasurement(0);
-					double frontLeftSonar = sonars.getMeasurement(5);
-					double leftSonar = sonars.getMeasurement(4);
-					double rightSonar = sonars.getMeasurement(2);
-					double frontRightSonar = sonars.getMeasurement(1);
-				
-					if(bumpers.oneHasHit()){
-						rotateY(-45);
-					}
-					if(boxDetected()){
-						setRotationalVelocity(0);
-						if(frontSonar < 0.3){
-							pinpoint();
-							avoidObstacle(leftSonar, frontLeftSonar, frontSonar, frontRightSonar, rightSonar);
-						}
-					} else if((sonars.getFrontQuadrantHits() > 0) || rightSonar < 0.5 || leftSonar < 0.5){
-						avoidObstacle(leftSonar, frontLeftSonar, frontSonar, frontRightSonar, rightSonar);
-					} else if ((getCounter() % 50) == 0) {
+					// with this two methods we change the current mode based on the bot state
+					// sensors and bumpers are checked
+					obstacleDetected();
+					targetDetected();
+	
+					// now we check the current mode and behave consequently
+					if(getMode()=="discover"){
+						setTranslationalVelocity(0.5);
+						if ((getCounter() % 50) == 0) {
 							setRotationalVelocity(Math.PI / 2 * (0.5 - Math.random()));
+						}
+					} else if(getMode()=="found"){
+						setRotationalVelocity(0);
+						double frontSonar = sonars.getMeasurement(0);
+						if(frontSonar < 0.3){
+							sendCoordinates(pinpoint());
+							// after sending the target coords we must move away
+							setMode("avoid");
+						}
+					} else if(getMode()=="avoid"){
+						double frontSonar = sonars.getMeasurement(0);
+						double frontLeftSonar = sonars.getMeasurement(5);
+						double leftSonar = sonars.getMeasurement(4);
+						double rightSonar = sonars.getMeasurement(2);
+						double frontRightSonar = sonars.getMeasurement(1);
+						avoidObstacle(leftSonar, frontLeftSonar, frontSonar, frontRightSonar, rightSonar);
+
 					}
 				}
 			}
 		} 
-		//else {
-		//	moveToStartPosition();
-		//}
 	}
 }
 	

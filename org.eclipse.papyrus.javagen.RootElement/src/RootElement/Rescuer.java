@@ -20,52 +20,34 @@ public class Rescuer extends Robot {
 	public Rescuer(Vector3d position, String name, Color3f color) {
 		super(position, name);
 		this.setColor(color);
-        bumpers = RobotFactory.addBumperBeltSensor(this, 16);
-        sonars = RobotFactory.addSonarBeltSensor(this, 8);
+		this.setMode("reach");
+        this.bumpers = RobotFactory.addBumperBeltSensor(this, 16);
+        this.sonars = RobotFactory.addSonarBeltSensor(this, 8);
+        this.lamp = RobotFactory.addLamp(this);
     	
 	}
 
 	@Override
 	public void initBehavior() {
-		// TODO Auto-generated method stub
-		if(!this.myTurn){
-			this.detach();
-		}
-		
+		System.out.println("I exist but is not my turn [" + this.name + "]");
+		this.detach();
 	}
 
 
 	@Override
-	public void performBehavior() {
-        
-		// perform the following actions every 5 virtual seconds
-
-		if(this.myTurn && !this.itExists()){
-			this.attach();
-		}
-			//setTranslationalVelocity(0.5); 
-		if (this.myTurn){
-			if(getCounter() % 5 == 0) {
-				
+	public void performBehavior() { 
+		if (this.itExists() && this.myTurn){
+			if(this.getCounter() % 10 == 0) {
 				setTranslationalVelocity(0.5);
-//				translateTo(new Vector3d(1,0,1));
-				
+				if ((this.getCounter() % 50) == 0) {
+					this.setRotationalVelocity(Math.PI / 2 * (0.5 - Math.random()));
+				}
 
 				if(bumpers.oneHasHit()){
-					rotateY(-45);
+					rotateY(-5);
 				} 
 			}
 		}
 	}
-	
-	@Override
-	public boolean isWorking(){
-		return true;
-	}
 
-	@Override
-	public boolean missionComplete() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 };

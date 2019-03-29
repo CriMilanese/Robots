@@ -18,9 +18,11 @@ public class CentralStation extends Agent {
 	
 	//create one instance of this class SINGLETON
 	private static CentralStation cs = new CentralStation(new Vector3d(15,0,15), "CentralStation");
-	ArrayList<Point3d> posArray; 
+	private static ArrayList<Point3d> posArray; 
 	Robot mapBots[];
 	Robot resBots[];
+//	boolean[] done = new boolean[]{false, false};
+//	boolean[] broken = new boolean[]{false, false};
 	
 	//private constructor
 //		TODO do we need more stuff in the constructor? 
@@ -36,10 +38,22 @@ public class CentralStation extends Agent {
 		return cs;
 	}	
 
-	public void setCoordinates(ArrayList<Point3d> positions) {
-		for(int i=0; i<positions.size();i++){
-			posArray.add(positions.get(i));
-		}
+	public void setCoordinates(Point3d position) {
+
+    	boolean contains = false;
+    	// check if position are already present in list
+    	for(int i=0;i<posArray.size();i++){
+    		if((position.x == posArray.get(i).x) && (position.z == posArray.get(i).z)){
+    			contains = true;
+    		}
+    	} // otherwise add new node
+    	if(!contains){
+    		posArray.add(position);
+        	System.out.println("new target coordinates added");
+        	System.out.println("curretn size of array is: " + posArray.size());
+    	} else {
+    		System.out.println("already existing target coordinates");
+    	}
 	}
 
 	public void sendMapper(EnvironmentDescription env, int howmany) {
@@ -47,6 +61,7 @@ public class CentralStation extends Agent {
 		for(int i=0; i<howmany; i++){
 			
 			mapBots[i] = DeviceFactory.getRobot("mapper");
+			mapBots[i].myTurn = true;
 			env.add(mapBots[i]);
 			
 		}
@@ -64,40 +79,56 @@ public class CentralStation extends Agent {
 	public void initBehavior(){
 		this.detach();
 		System.out.println("I exist and my name is "+this.name);
-		mapBots[0].myTurn = true;
-		mapBots[1].myTurn = true;
 	}
 	
 	public void performBehavior(){
-			boolean[] done = new boolean[2];
-			boolean[] broken = new boolean[2];
+//		System.out.println("central station performing behavior");
+		if (getCounter() % 5 == 0){
 			
-			done[0] = mapBots[0].missionComplete();
-			done[1] = mapBots[1].missionComplete();
-			broken[0] = (mapBots[0].isWorking())?false:true;
-			broken[1] = (mapBots[1].isWorking())?false:true;
-			
-			for(int i=0; i<2; i++){
-				if((done[i] || broken[i])){
-					if(mapBots[i].itExists()){
-						mapBots[i].detach();
-					}
+//			for(int i = 0; i < 2; i++){
+//				System.out.println("[CS] for loop entered");
+//				if(mapBots[i].itExists()){
+//					System.out.println("[CS] itExists entered");
+//					if(posArray.size() >= 4){
+//						mapBots[i].myTurn = false;
+//						mapBots[i].setMode("done");
+//					}
+//					done[i] = (mapBots[i].getMode()=="done")?true:false;
+//					broken[i] = (mapBots[i].getMode()=="severeFault")?true:false;
+//					if((done[i] | (broken[i]))){
+//						mapBots[i].detach();
+//					}
+//				}
+//				if(!resBots[i].itExists() && done[i]){
+//					resBots[i].attach();
+//					resBots[i].myTurn = true;
+//					System.out.println("Is finally my turn!");
+//				}
+//			}	
+			if(mapBots[0].itExists() && mapBots[1].itExists()){
+				if(posArray.size() >=4 ){
+						mapBots[0].myTurn = false;
+						mapBots[1].myTurn = false;
+						mapBots[0].setMode("done");
+						mapBots[1].setMode("done");
+						mapBots[0].detach();
+						mapBots[1].detach();
+				} else {
+						if (mapBots[0].getMode()=="severeFault"){
+							mapBots[0].detach();
+						} else if (mapBots[1].getMode()=="severeFault"){
+							mapBots[1].detach();
+						}
 				}
 			}
-			if(done[0] && done[1]){
-				if(!resBots[0].itExists()){
-					resBots[0].attach();				
+			for(int i=0; i<2 ;i++){
+				if(!resBots[i].itExists() && mapBots[i].getMode()=="done"){	
+					resBots[i].attach();
+					resBots[i].myTurn = true;
+					System.out.println("Is finally my turn!");
 				}
-				if(!resBots[1].itExists()){
-					resBots[1].attach();				
-				}
-				resBots[0].myTurn = true;
-				resBots[1].myTurn = true;
 			}
 		}
-	
-	
-	public boolean missionComplete(){
-		return false;
 	}
+
 };
